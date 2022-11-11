@@ -138,8 +138,177 @@ where rank=1
 | B           | curry        |  
 | B           | ramen        | 
 | C           | ramen        | 
+***
+
+### 6. Which item was purchased first by the customer after they became a member?
+````sql
+select  x.customer_id,x.product_name
+from 
+(
+	   select  s.customer_id ,me.product_name,s.order_date,
+                   [rank]= DENSE_RANK() OVER(PARTITION BY s.customer_id ORDER BY s.order_date)
+           from members as m join sales as s on m.customer_id=s.customer_id 
+	   join menu as me on me.product_id =s.product_id
+	  where m.join_date<=s.order_date
+)
+as x
+where rank=1
+````
+
+#### Steps:
+- Using FROM **Nested Querie** output **table** to crete temporary table,For each customer rate the product has been purchased by  (```x```)
+- Using **WINDOWS FUNCTION** ```dense_rank()``` to rank 
+- Using Where to retrive the first iten
+
+#### Answer:
+| customer_id | product_name |
+| ----------- | ----------  |
+| A           | curry       |
+| B           | sushi       |
+
+- Customer A's first order as member is curry.
+- Customer B's first order as member is sushi.
+***
 
 
+### 7. Which item was purchased just before the customer became a member?
+
+````sql
+select  m1.customer_id,s1.order_date,me1.product_name
+from    members as m1 join sales as s1 on m1.customer_id=s1.customer_id 
+				     join menu as me1 on me1.product_id =s1.product_id
+where s1.order_date in 
+	(
+	  select top 1 s2.order_date
+	  from members as m2 join sales as s2 on m2.customer_id=s2.customer_id 
+	  join menu as me2 on me2.product_id =s2.product_id
+	  where (m1.customer_id=m2.customer_id) and (m1.join_date>s2.order_date)
+	  order by s2.order_date desc 
+	 )
+order by 1 , 2
+````
+
+#### Steps:
+- Using WHERE **Nested Querie** output **LIST** , in order to choose from the desired values
+- Use **Passing Parameters** method for each customr take only the orders which them order date is latter then  join date
+ ```where (m1.customer_id=m2.customer_id) and (m1.join_date>s2.order_date)```
+- Using ```Top 1``` to retrive the first product.
+- NOTE: I could use the same method as i used at section 6
+
+#### Answer:
+| customer_id | order_date  | product_name |
+| ----------- | ---------- |----------  |
+| A           | 2021-01-01 |  sushi        |
+| A           | 2021-01-01 |  curry        |
+| B           | 2021-01-04 |  sushi        |
+
+- Customer A’s last order before becoming a member is sushi and curry.
+- Whereas for Customer B, it's sushi. That must have been a real good sushi!
+***
+
+### 8. What is the total items and amount spent for each member before they became a member?
+
+````sql
+select  m1.customer_id, [num]=count(distinct me1.product_id),[Total price]= sum(me1.price) 
+from    members as m1 join sales as s1 on m1.customer_id=s1.customer_id 
+				     join menu as me1 on me1.product_id =s1.product_id
+where s1.order_date in 
+	(
+	  select s2.order_date
+	  from members as m2 join sales as s2 on m2.customer_id=s2.customer_id 
+	  join menu as me2 on me2.product_id =s2.product_id
+	  where (m1.customer_id=m2.customer_id) and (m1.join_date>s2.order_date)
+	 )
+group by  m1.customer_id 
+order by 1 , 2
+````
+
+#### Steps:
+
+
+| customer_id | num | Total_sales |
+| ----------- | ---------- |----------  |
+| A           | 2 |  25       |
+| B           | 2 |  40       |
+
+Before becoming members,
+- Customer A spent $ 25 on 2 items.
+- Customer B spent $40 on 2 items.
+
+***
+
+### 9. If each $1 spent equates to 10 points and sushi has a 2x points multiplier — how many points would each customer have?
+
+````sql
+WITH menupoints AS
+(
+   SELECT *,
+   [points]= CASE
+				 WHEN product_id = 1 THEN price * 20
+				 ELSE price * 10
+             END 
+   FROM menu
+)
+select customer_id,sum(menupoints.points)
+from sales as s join menupoints on s.product_id = menupoints.product_id
+group by s.customer_id
+
+````
+
+#### Steps:
+
+#### Answer:
+| customer_id | points | 
+| ----------- | ---------- |
+| A           | 860 |
+| B           | 940 |
+| C           | 360 |
+
+- Total points for Customer A is 860.
+- Total points for Customer B is 940.
+- Total points for Customer C is 360.
+
+***
+
+### 10.In the first week after a customer joins the program (including their join date) they earn 2x points on all items, 
+### not just sushi - how many points do customer A and B have at the end of January?
+
+````sql
+WITH 
+DateRange AS
+(
+   SELECT *, spical= DATEADD(DAY,6,members.join_date)   
+   FROM members
+),
+menupoints AS
+(
+   SELECT [customer_id]=DateRange.customer_id,
+   [points]= CASE
+				 WHEN (sales.order_date between DateRange.join_date and DateRange.spical) or menu.product_id = 1
+				 THEN price * 20
+				 ELSE price * 10
+             END 
+   FROM menu join sales on sales.product_id=menu.product_id join DateRange on sales.customer_id=DateRange.customer_id
+   where month(sales.order_date) = '01' 
+)
+select menupoints.customer_id,sum(menupoints.points)
+from menupoints
+group by menupoints.customer_id
+
+
+
+````
+
+#### Steps:
+
+#### Answer:
+| customer_id | total_points | 
+| ----------- | ---------- |
+| A           | 1370 |
+| B           | 820 |
+
+- Total points for Customer A is 1,370.
+- Total points for Customer B is 820.
 ***
 
 
