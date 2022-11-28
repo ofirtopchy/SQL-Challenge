@@ -145,7 +145,7 @@ FREQRANK as
 |679	|1	|1|
 |679	|-2|	|2|
 
--TO Retrive the most freq 
+-To retrive the most freq 
 ````sql
 TOPFREQRANK as
 (
