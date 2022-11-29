@@ -295,6 +295,40 @@ lastchat as
 
 ***
 
+###  SUMMRY
+
+#### Steps:
+- **left join** to keep all the agent 
+- **isnull** avoiding null
+- **stuff** to to stuff all the rows to one row
+
+
+````sql
+select 
+	NumOfCon.agent_id,
+	NumOfCon.[num of con],
+	[EFFICANT CONV] =   ISNULL(EFFINCYBYAGENT.[eff con],0),
+	stuff((SELECT '; ' + cast (The_sentiment_of_the_last_message_score as varchar)
+           from TOPFREQRANK
+		   where TOPFREQRANK.agent_id=NumOfCon.agent_id
+           FOR XML PATH('')), 1, 1, '')[TOP FREQ GRADE],
+	AVGconversation_usage.avg_usage,
+	[num of unkie name] = ISNULL(numofunike.num,0),
+	lastchat.con
+from NumOfCon left join EFFINCYBYAGENT on NumOfCon.agent_id = EFFINCYBYAGENT.agent_id
+                   join AVGconversation_usage on  NumOfCon.agent_id = AVGconversation_usage.agent_id 
+		      left join numofunike ON numofunike.agent_id = NumOfCon.agent_id
+			  left join lastchat on lastchat.agent_id = NumOfCon.agent_id
+````
+#### Answer:
+agent_id	num of con	EFFICANT CONV	TOP FREQ GRADE	avg_usage	num of unkie name	con
+677	2	0	 -1; 2	0.25000000	4	2021-09-02 23:45:00.0000000
+679	7	0	 2; 0; 1	NULL	0	2021-09-02 23:04:00.0000000
+685	4	1	 1	0.75000000	2	2021-09-02 23:44:00.0000000
+701	2	0	 0; 2	NULL	0	2021-09-02 00:27:00.0000000
+719	3	0	 2; -2; 1	NULL	0	2021-09-02 16:55:00.0000000
+***
+
 
 
 
