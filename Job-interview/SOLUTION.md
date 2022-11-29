@@ -47,9 +47,13 @@ group by c.agent_id
 ### C.Number of conversations with technique_efficiency > 70% 
 
 #### PLAN: 
-- 1.Add Calculated fields to table converstion with num of ```SUGGESTION_CLICKED``` and ```SUGGESTION_VIEWED``` (table)
-- 2.Add Calculated fields ```EFFICNY```= S```UGGESTION_CLICKED```/```SUGGESTION_VIEWED```(table)
-- 3.Filttering efficny adove 70% (table)
+1. Add Calculated fields to table converstion with num of ```SUGGESTION_CLICKED``` and ```SUGGESTION_VIEWED``` (table)
+2. Add Calculated fields ```EFFICNY```= ```SUGGESTION_CLICKED```/```SUGGESTION_VIEWED```(table)
+3. Filttering efficny adove 70% (table)
+
+#### 1: auxiliary calculations
+#### Steps:
+- **Passing Parmter** for each agent and converstion count how many events with SUGGESTION_CLICKED/SUGGESTION_VIEWED
 
 ````sql
 SUGGESTION as
@@ -69,9 +73,6 @@ from Conversations as c1
 group by c1.agent_id,c1.conversation_id
 ),
 ````
-#### Steps:
-- Passing Parmter for each agent and converstion count how many events with SUGGESTION_CLICKED/SUGGESTION_VIEWED
-- 
 #### Answer:
 |agent_id|conversation_id|viwed	|clicked|
 | ----------- | ----------- |----------- |----------- |
@@ -80,6 +81,10 @@ group by c1.agent_id,c1.conversation_id
 |685|	17032522|4|6|
 |677|	17032548|0|0|
 
+#### 2: eff calculations
+
+#### Steps:
+- USING **CAST**(s.clicked as decimal) to dived 2 int
 
 ````sql
 EFFINCY as
@@ -92,8 +97,7 @@ EFFINCY as
 	from SUGGESTION  as s
 )
 ````
-#### Steps:
-- USING CAST(s.clicked as decimal) to dived 2 int
+
 
 #### Answer:
 |agent_id	|conversation_id	|clicked	|viwed	|eff|
@@ -102,6 +106,11 @@ EFFINCY as
 |677|	17031898|	2|	5	|0.400|
 |685|17032522|	6|	4	|1.500|
 |677|	17032548|	0|	0|	0.00|
+
+
+#### 3:each one "real" efficny
+#### Steps: 
+- **count** converstion adove 0.7 **(when)** for each **(group)** agent
 
 ````sql
 EFFINCYBYAGENT as
@@ -112,8 +121,6 @@ EFFINCYBYAGENT as
 	group by e.agent_id
 ),
 ````
-#### Steps:
-- count converstion adove 0.7 **(when)** for each **(group)** agent
 
 #### Answer:
 |agent_|eff con |
@@ -121,15 +128,17 @@ EFFINCYBYAGENT as
 |685|1|
 
 ***
+
 ###  D.Most frequent last sentiment score
 
 #### Steps:
--**Rank** the rate of the score that evrey agent got using WINDOWS FUNCTION
+-**Rank** the rate of the score that evrey agent got using **WINDOWS FUNCTION**
 
 ````sql
 FREQRANK as
 (
-    select c.agent_id,c.The_sentiment_of_the_last_message_score, [rank]= dense_rank()over(partition by c.agent_id order by count(c.The_sentiment_of_the_last_message_score) desc)
+    select c.agent_id,c.The_sentiment_of_the_last_message_score, 
+    [rank]= dense_rank()over(partition by c.agent_id order by count(c.The_sentiment_of_the_last_message_score) desc)
 	from Conversations  as c
 	group by c.agent_id,c.The_sentiment_of_the_last_message_score
 )
@@ -145,7 +154,8 @@ FREQRANK as
 |679	|1	|1|
 |679	|-2|	|2|
 
--To retrive the most freq 
+To retrive the most freq 
+
 ````sql
 TOPFREQRANK as
 (
@@ -154,7 +164,136 @@ TOPFREQRANK as
   where rank=1
 ),
 ````
+#### Answer:
+only with rank 1
 ***
+
+###  E.	Average conversation_usage
+(usage = messages with at least one suggestion clicked in the conversation / total number of messages in a conversation)
+
+#### Steps:
+- Using suggestion from chapter C to filter only converstion with 0>clicked
+- **passing parmeter** for each con get the total number of messages in a conversation '''(max(e.message_number))'''
+
+````sql
+conversation_usage as
+(
+  select s.agent_id,s.conversation_id,s.clicked,
+  usage =   CAST(s.clicked as decimal (5,2)) /CAST(
+						( 
+					     	select max(e.message_number)
+					        from  Events as e
+					        where e.conversation_id = s.conversation_id
+						)
+						s decimal (5,2))
+  from SUGGESTION as s
+  where s.clicked>0
+),
+````
+
+#### Answer:
+677	17031898	2	0.25000000
+685	17032522	6	0.75000000
+
+To retrive avg 
+
+````sql
+AVGconversation_usage as
+(
+  select cs.agent_id, avg_usage = avg(cs.usage)
+  from conversation_usage as cs
+  group by cs.agent_id
+)
+````
+
+#### Answer:
+same
+
+***
+
+### F.	Number of unique event_name used
+
+#### PLAN:
+1. calculted field - each agent and events how many events have the same name with other agent
+-  **Passing Parmter** for each agent and event name count how many events with same name and other agent
+-  **having** after the agregation i am intersting only by the evnts name with uniqe
+
+2. **count** how many uniqe name each agent have
+
+#### 1: calculted field
+````sql
+unikename as
+(
+select c1.agent_id,e1.event_name,
+x=               (
+                 select count(*)
+				 from  Conversations as c2 join Events as e2 on e2.conversation_id=c2.conversation_id
+				 where c1.agent_id<>c2.agent_id and e1.event_name = e2.event_name 
+				)
+from Conversations as c1 join Events as e1 on e1.conversation_id=c1.conversation_id
+where e1.event_name is not null
+group by c1.agent_id,e1.event_name
+
+having 0 =      (
+                 select count(*)
+				 from  Conversations as c2 join Events as e2 on e2.conversation_id=c2.conversation_id
+				 where c1.agent_id<>c2.agent_id and e1.event_name = e2.event_name 
+				)
+),
+````
+|agent_id|	event_name|	x|
+| ------- | ------- | ------- |
+|677|	action	|0|
+|677|	apology	|0|
+|677|	closing	|0|
+|685|	help	|0|
+|677|	subscription|	0|
+|685|	welcome	|0|
+
+#### 2: count
+````sql
+numofunike as
+(
+  select unikename.agent_id,  num=count(unikename.x)
+  from unikename 
+  group by unikename.agent_id
+),
+````
+#### Answer:
+| agent_id| 	num| 
+| ------- | ------- | 
+| 677	| 4| 
+| 685	| 2| 
+
+***
+
+###  G.Last chat date
+
+#### Steps:
+-**FIRST_VALUE** to get first date_time for each agent
+
+````sql
+lastchat as
+(
+	select distinct agent_id,con= FIRST_VALUE(c.date_time) OVER (PARTITION BY c.agent_id ORDER BY c.date_time desc)  
+	from Conversations as c
+)
+)
+````
+
+#### Answer:
+|agent_id	|The_sentiment_of_the_last_message_score|	rank|
+| ------- | ------- | ------- |
+|677|	-1|	1|
+|677	|2|	1|
+|679|	2|	1|
+|679	|0	|1|
+|679	|1	|1|
+|679	|-2|	|2|
+
+***
+
+
 
 
 
