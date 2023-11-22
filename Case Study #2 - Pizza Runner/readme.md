@@ -6,9 +6,9 @@
 
 1. [Data Prefration](#Data Prefration)
 
-2. [Business Task} (### Business Task)
-
-## Business Task
+2. kaki 
+   
+   ## Business Task
 
 <a> id name="Business Task"</a>
 
@@ -31,6 +31,62 @@ case when duration like "%null%" then null else duration end as duration,
 case when cancellation like "%null%" then null else cancellation end as cancellation  
 from pizza_runner.runner_orders  
 )select * from dasda</code>
+
+
+
+# Table of Contents
+
+- [Section 1](#section-1)
+- [Section 2](#section-2)
+  - [Subsection 2.1](#subsection-21)
+  - [Subsection 2.2](#subsection-22)
+- [Section 3](#section-3)
+
+## Section 1
+
+Content for Section 1 goes here.
+
+## Section 2
+
+Content for Section 2 goes here.
+
+### Subsection 2.1
+
+Content for Subsection 2.1 goes here.
+
+### Subsection 2.2
+
+Content for Subsection 2.2 goes here.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Section 3
+
+Content for Section 3 goes here.
 
 
 
