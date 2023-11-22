@@ -4,7 +4,7 @@
 
 ## Table Of Contents
 
-1. [Data Prefration](#Data Prefration)
+1. [Data Prefration](#Data-Prefration)
 
 2. kaki 
    
@@ -34,29 +34,6 @@ from pizza_runner.runner_orders
 
 
 
-# Table of Contents
-
-- [Data Prefration ](#Data Prefration)
-- [Section 2](#section-2)
-  - [Subsection 2.1](#subsection-21)
-  - [Subsection 2.2](#subsection-22)
-- [Section 3](#section-3)
-
-## Section 1
-
-Content for Section 1 goes here.
-
-## Section 2
-
-Content for Section 2 goes here.
-
-### Subsection 2.1
-
-Content for Subsection 2.1 goes here.
-
-### Subsection 2.2
-
-Content for Subsection 2.2 goes here.
 
 
 
@@ -64,29 +41,6 @@ Content for Subsection 2.2 goes here.
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Section 3
-
-Content for Section 3 goes here.
 
 
 
