@@ -12,7 +12,7 @@
 
 <a> id name="Business Task"</a>
 
-## Danny requires assistance to clean the data and apply some basic calculations so he can better direct his runners and optimise Pizza Runner’s operations.
+Danny requires assistance to clean the data and apply some basic calculations so he can better direct his runners and optimise Pizza Runner’s operations.
 
 Danny has provided an entity relationship diagram of his database as below:
 
@@ -31,5 +31,9 @@ case when duration like "%null%" then null else duration end as duration,
 case when cancellation like "%null%" then null else cancellation end as cancellation  
 from pizza_runner.runner_orders  
 )select * from dasda</code>
+
+
+
+
 
 </head>
