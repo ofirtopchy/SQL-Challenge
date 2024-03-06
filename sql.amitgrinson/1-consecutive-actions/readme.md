@@ -7,8 +7,7 @@
   login_date,
     ROW_NUMBER() OVER(PARTITION BY user_id order by login_date) - ROW_NUMBER() OVER(PARTITION BY user_id, LOGIN order by login_date asc) as grp
   FROM LOGINS
-),
-    
+),  
 login_ranks as (
   SELECT user_id,
     COUNT(*) AS most_consecutive_logins,
@@ -18,7 +17,6 @@ login_ranks as (
   GROUP BY user_id,
     GRP
   )
-  
 SELECT user_id,
   most_consecutive_logins
 FROM LOGIN_RANKS
